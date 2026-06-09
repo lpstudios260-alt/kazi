@@ -1,0 +1,61 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user of the application",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["email", "createdAt", "updatedAt"]
+    },
+    "ClientProfile": {
+      "title": "ClientProfile",
+      "description": "A client profile for startups/users.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "companyName": { "type": "string" },
+        "industry": { "type": "string" },
+        "stage": { "type": "string" },
+        "missionStatement": { "type": "string" },
+        "targetAudience": { "type": "string" },
+        "websiteUrl": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "companyName", "createdAt", "updatedAt"]
+    },
+    "MeetingNote": {
+      "title": "MeetingNote",
+      "description": "Persisted notes and AI summaries for a calendar event.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "eventId": { "type": "string" },
+        "eventTitle": { "type": "string" },
+        "rawNotes": { "type": "string" },
+        "aiSummary": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "eventId", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User accounts"
+    },
+    "clientProfiles/{clientId}": {
+      "schema": { "$ref": "#/entities/ClientProfile" },
+      "description": "Client profiles for startups using the workspace"
+    },
+    "meetingNotes/{noteId}": {
+      "schema": { "$ref": "#/entities/MeetingNote" },
+      "description": "User meeting notes and summaries"
+    }
+  }
+}

@@ -1,0 +1,119 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['email', 'createdAt', 'updatedAt']) &&
+             data.email is string && data.email.size() <= 256 &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && 
+                    request.auth.uid == userId && 
+                    isValidId(userId) &&
+                    isValidUser(incoming()) && 
+                    incoming().createdAt == request.time &&
+                    incoming().updatedAt == request.time;
+      allow update: if isSignedIn() && 
+                    request.auth.uid == userId &&
+                    isValidUser(incoming()) &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['email', 'updatedAt']);
+    }
+
+    function isValidClientProfile(data) {
+      return data.keys().hasAny(['userId', 'companyName', 'industry', 'stage', 'missionStatement', 'targetAudience', 'websiteUrl', 'createdAt', 'updatedAt']) &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.companyName is string && data.companyName.size() <= 200 &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+
+    match /clientProfiles/{clientId} {
+      allow read: if isSignedIn() && request.auth.uid == clientId;
+      allow create: if isSignedIn() && 
+                    isValidId(clientId) &&
+                    isValidClientProfile(incoming()) && 
+                    incoming().userId == request.auth.uid &&
+                    incoming().createdAt == request.time &&
+                    incoming().updatedAt == request.time;
+      allow update: if isSignedIn() &&
+                    request.auth.uid == clientId &&
+                    isValidClientProfile(incoming()) &&
+                    incoming().userId == existing().userId &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['companyName', 'industry', 'stage', 'missionStatement', 'targetAudience', 'websiteUrl', 'updatedAt']);
+      allow delete: if isSignedIn() && request.auth.uid == clientId;
+    }
+
+    function isValidMeetingNote(data) {
+      return data.keys().hasAny(['userId', 'eventId', 'eventTitle', 'rawNotes', 'aiSummary', 'createdAt', 'updatedAt']) &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.eventId is string &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+
+    match /meetingNotes/{noteId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && 
+                    isValidId(noteId) &&
+                    isValidMeetingNote(incoming()) && 
+                    incoming().userId == request.auth.uid &&
+                    incoming().createdAt == request.time &&
+                    incoming().updatedAt == request.time;
+      allow update: if isSignedIn() &&
+                    existing().userId == request.auth.uid &&
+                    isValidMeetingNote(incoming()) &&
+                    incoming().userId == existing().userId &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['rawNotes', 'aiSummary', 'eventTitle', 'updatedAt']);
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+    function isValidChatSession(data) {
+      return data.keys().hasAll(['userId', 'title', 'createdAt', 'updatedAt']) &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.title is string && data.title.size() <= 200 &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+
+    match /chatSessions/{sessionId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && 
+                    isValidId(sessionId) &&
+                    isValidChatSession(incoming()) && 
+                    incoming().userId == request.auth.uid &&
+                    incoming().createdAt == request.time &&
+                    incoming().updatedAt == request.time;
+      allow update: if isSignedIn() &&
+                    existing().userId == request.auth.uid &&
+                    isValidChatSession(incoming()) &&
+                    incoming().userId == existing().userId &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['title', 'updatedAt', 'messages']);
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+  }
+}

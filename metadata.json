@@ -1,0 +1,6 @@
+{
+  "name": "Nova AI - Startup Agent",
+  "description": "An intelligent agentic platform built for startups, providing automated operations, market intelligence, compliance tools, and strategic guidance.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
